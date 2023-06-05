@@ -3,3 +3,10 @@
     margin: 0;
     box-sizing: border-box;
 }
+
+.player-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+}

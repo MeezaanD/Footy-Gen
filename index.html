@@ -9,11 +9,16 @@
 </head>
 <body>
     <h2>Football Team Side Randomizer</h2>
-    <label for="playerName">Enter player name:</label>
-    <input type="text" id="playerName">
-    <button onclick="addPlayer()">Add Player</button>
+    <div>
+        <label for="playerName">Enter player name:</label>
+        <input type="text" id="playerName">
+        <label for="playerImage">Enter player image link:</label>
+        <input type="text" id="playerImage">
+        <button onclick="addPlayer()">Add Player</button>
+    </div>
+    <div id="playerImages"></div>
     <button onclick="randomizeTeams()">Randomize Teams</button>
-    <button onclick="clearLocalStorage()">Clear Players</button>
+    <button onclick="clearLocalStorage()">Clear Local Storage</button>
     
     <h3>Players:</h3>
     <ul id="playersList"></ul>

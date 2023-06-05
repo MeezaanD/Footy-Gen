@@ -6,15 +6,30 @@
             var playerNameInput = document.getElementById("playerName");
             var playerName = playerNameInput.value;
             
+            var playerImageInput = document.getElementById("playerImage");
+            var playerImage = playerImageInput.value;
+            
             if (playerName !== "") {
-                players.push(playerName);
+                players.push({ name: playerName, image: playerImage });
                 var playersList = document.getElementById("playersList");
                 var li = document.createElement("li");
                 li.appendChild(document.createTextNode(playerName));
                 playersList.appendChild(li);
                 playerNameInput.value = "";
+                playerImageInput.value = "";
                 saveDataToLocalStorage();
+                renderPlayerImage(playerName, playerImage);
             }
+        }
+        
+        // Function to render the player image
+        function renderPlayerImage(playerName, playerImage) {
+            var playerImagesDiv = document.getElementById("playerImages");
+            var img = document.createElement("img");
+            img.src = playerImage;
+            img.alt = playerName;
+            img.classList.add("player-image");
+            playerImagesDiv.appendChild(img);
         }
         
         // Function to randomize the teams
@@ -33,7 +48,7 @@
             
             for (var i = 0; i < 10; i++) {
                 var li = document.createElement("li");
-                li.appendChild(document.createTextNode(randomizedPlayers[i]));
+                li.appendChild(document.createTextNode(randomizedPlayers[i].name));
                 
                 if (i < 5) {
                     team1.appendChild(li);
@@ -70,6 +85,7 @@
             if (storedPlayers) {
                 players = JSON.parse(storedPlayers);
                 renderPlayersList();
+                renderPlayerImages();
             }
         }
         
@@ -79,18 +95,32 @@
             playersList.innerHTML = "";
         
             for (var i = 0; i < players.length; i++) {
-                var playerName = players[i];
+                var playerName = players[i].name;
                 var li = document.createElement("li");
                 li.appendChild(document.createTextNode(playerName));
                 playersList.appendChild(li);
             }
         }
-
+        
+        // Function to render the player images from the localStorage
+        function renderPlayerImages() {
+            var playerImagesDiv = document.getElementById("playerImages");
+            playerImagesDiv.innerHTML = "";
+        
+            for (var i = 0; i < players.length; i++) {
+                var playerName = players[i].name;
+                var playerImage = players[i].image;
+                renderPlayerImage(playerName, playerImage);
+            }
+        }
+        
         // Function to clear localStorage
         function clearLocalStorage() {
             localStorage.removeItem("players");
             players = [];
             renderPlayersList();
+            var playerImagesDiv = document.getElementById("playerImages");
+            playerImagesDiv.innerHTML = "";
         }
         
         // Load data from localStorage when the page loads
