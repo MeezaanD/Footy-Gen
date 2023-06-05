@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <title>Randomizer</title>
+</head>
+<body>
+    <h2>Football Team Side Randomizer</h2>
+    <label for="playerName">Enter player name:</label>
+    <input type="text" id="playerName">
+    <button onclick="addPlayer()">Add Player</button>
+    <button onclick="randomizeTeams()">Randomize Teams</button>
+    <button onclick="clearLocalStorage()">Clear Players</button>
+    
+    <h3>Players:</h3>
+    <ul id="playersList"></ul>
+    
+    <h3>Team 1:</h3>
+    <ul id="team1"></ul>
+    
+    <h3>Team 2:</h3>
+    <ul id="team2"></ul>
+    <script src="/script.js"></script>
+</body>
+</html>
