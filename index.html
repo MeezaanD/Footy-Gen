@@ -1,33 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <title>Randomizer</title>
 </head>
+
 <body>
-    <h2>Football Team Side Randomizer</h2>
-    <div>
-        <label for="playerName">Enter player name:</label>
-        <input type="text" id="playerName">
-        <label for="playerImage">Enter player image link:</label>
-        <input type="text" id="playerImage">
-        <button onclick="addPlayer()">Add Player</button>
+    <h2 class="text-center mt-1">Football Team Side Randomizer</h2>
+    <div class="container d-flex justify-content-center p-3">
+        <div class="row">
+            <div class="col-6 col-sm-6 col-md-6 col-lg-6">
+                <input type="text" id="playerName" placeholder="Enter Player Name">
+            </div>
+            <br>
+            <div class="col-6 col-sm-6 col-md-6 col-lg-6">
+                <input type="text" id="playerImage" placeholder="Enter player image URL">
+            </div>
+        </div>
     </div>
-    <div id="playerImages"></div>
-    <button onclick="randomizeTeams()">Randomize Teams</button>
-    <button onclick="clearLocalStorage()">Clear Local Storage</button>
+
+    <!-- <div id="playerImages"></div> -->
+
+    <div class="container d-flex justify-content-center">
+        <ul class="btns">
+            <li><button class="btn btn-dark p-3" onclick="addPlayer()">Add Player <i class="fa-solid fa-circle-plus"></i></button></li>
+            <li><button class="btn btn-dark p-3" onclick="randomizeTeams()">Randomize Teams <i class="fa-solid fa-infinity"></i></button></li>
+            <li><button class="btn btn-dark p-3" onclick="clearLocalStorage()">Clear Players <i class="fa-solid fa-trash"></i></button></li>
+        </ul>
+    </div>
+
+    <h3 class="text-center mt-1">Players Available:</h3>
+
+    <ul id="playersList">
+        
+    </ul>
     
-    <h3>Players:</h3>
-    <ul id="playersList"></ul>
-    
-    <h3>Team 1:</h3>
-    <ul id="team1"></ul>
-    
-    <h3>Team 2:</h3>
-    <ul id="team2"></ul>
+    <div class="container">
+        <div class="row text-center teams">
+            <div class="col-6 col-sm-6 col-md-6 col-lg-6 border">
+                <h3 class="p-2 border-bottom">Team 1:</h3>
+                <ol class="text-center" id="team1">
+                    </ul>
+            </div>
+            <div class="col-6 col-sm-6 col-md-6 col-lg-6 border">
+                <h3 class="p-2 border-bottom">Team 2:</h3>
+                <ol class="text-center" id="team2">
+                    </ul>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
     <script src="/script.js"></script>
+    <script src="https://kit.fontawesome.com/a13e2b2f6c.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            padding: 1rem;
+        }
+
+        .btns {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            /* margin: 1rem; */
+            padding: 0;
+        }
+
+        input[type='text'] {
+            padding: 10px;
+            text-align: center;
+        }
+
+        #playersList {
+            display: flex;
+            gap: 5rem;
+            justify-content: center;
+        }
+
+        @media screen and (max-width: 550px) {
+            #playersList {
+                display: block;
+            }
+
+            .row {
+                display: block;
+            }
+
+            .btns {
+                display: block;
+            }
+
+            .btn {
+                margin-top: 1rem;
+            }
+        }
+    </style>
 </body>
+
 </html>
