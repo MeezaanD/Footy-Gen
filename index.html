@@ -12,7 +12,7 @@
 </head>
 
 <body>
-    <h2 class="text-center mt-1">Football Team Side Randomizer</h2>
+    <h2 class="text-center pt-5">Football Team Side Randomizer</h2>
     <div class="container d-flex justify-content-center p-3">
         <div class="row">
             <div class="col-6 col-sm-6 col-md-6 col-lg-6">
@@ -37,18 +37,18 @@
 
     <h3 class="text-center mt-1">Players Available:</h3>
 
-    <ul id="playersList">
-        
-    </ul>
+    <ol id="playersList">
+
+    </ol>
     
     <div class="container">
         <div class="row text-center teams">
-            <div class="col-6 col-sm-6 col-md-6 col-lg-6 border">
+            <div class="col-12 col-sm-6 col-md-6 col-lg-6 border">
                 <h3 class="p-2 border-bottom">Team 1:</h3>
                 <ol class="text-center" id="team1">
                     </ul>
             </div>
-            <div class="col-6 col-sm-6 col-md-6 col-lg-6 border">
+            <div class="col-12 col-sm-6 col-md-6 col-lg-6 border">
                 <h3 class="p-2 border-bottom">Team 2:</h3>
                 <ol class="text-center" id="team2">
                     </ul>
@@ -69,14 +69,22 @@
         crossorigin="anonymous"></script>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;900&display=swap');
+
         * {
             padding: 0;
             margin: 0;
             box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
         }
 
         .btn {
             padding: 1rem;
+            border-radius: 2px;
+        }
+
+        .btn:hover {
+            box-shadow: 3px 5px rgb(140, 140, 140);
         }
 
         .btns {
@@ -90,17 +98,22 @@
         input[type='text'] {
             padding: 10px;
             text-align: center;
+            border: 1px solid black;
+            box-shadow: 3px 5px rgb(195, 195, 195);
         }
 
         #playersList {
             display: flex;
             gap: 5rem;
             justify-content: center;
+            font-weight: 900;
         }
 
         @media screen and (max-width: 550px) {
             #playersList {
                 display: block;
+                margin: auto;
+                text-align: center;
             }
 
             .row {
