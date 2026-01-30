@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/style.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <title>Randomizer</title>
@@ -29,9 +28,12 @@
 
     <div class="container d-flex justify-content-center">
         <ul class="btns">
-            <li><button class="btn btn-dark p-3" onclick="addPlayer()">Add Player <i class="fa-solid fa-circle-plus"></i></button></li>
-            <li><button class="btn btn-dark p-3" onclick="randomizeTeams()">Randomize Teams <i class="fa-solid fa-infinity"></i></button></li>
-            <li><button class="btn btn-dark p-3" onclick="clearLocalStorage()">Clear Players <i class="fa-solid fa-trash"></i></button></li>
+            <li><button class="btn btn-dark p-3" onclick="addPlayer()">Add Player <i
+                        class="fa-solid fa-circle-plus"></i></button></li>
+            <li><button class="btn btn-dark p-3" onclick="randomizeTeams()">Randomize Teams <i
+                        class="fa-solid fa-infinity"></i></button></li>
+            <li><button class="btn btn-dark p-3" onclick="clearLocalStorage()">Clear Players <i
+                        class="fa-solid fa-trash"></i></button></li>
         </ul>
     </div>
 
@@ -40,7 +42,7 @@
     <ol id="playersList">
 
     </ol>
-    
+
     <div class="container">
         <div class="row text-center teams">
             <div class="col-12 col-sm-6 col-md-6 col-lg-6 border">
@@ -56,13 +58,138 @@
         </div>
     </div>
 
+    <script>
+        // Array to store the list of players
+        var players = [];
 
+        // Function to add a player to the list
+        function addPlayer() {
+            var playerNameInput = document.getElementById("playerName");
+            var playerName = playerNameInput.value;
 
+            var playerImageInput = document.getElementById("playerImage");
+            var playerImage = playerImageInput.value;
 
+            if (playerName !== "") {
+                players.push({ name: playerName, image: playerImage });
+                var playersList = document.getElementById("playersList");
+                var li = document.createElement("li");
+                li.appendChild(document.createTextNode(playerName));
+                playersList.appendChild(li);
+                playerNameInput.value = "";
+                playerImageInput.value = "";
+                saveDataToLocalStorage();
+                renderPlayerImage(playerName, playerImage);
+            }
+        }
 
+        // Function to render the player image
+        function renderPlayerImage(playerName, playerImage) {
+            var playerImagesDiv = document.getElementById("playerImages");
+            var img = document.createElement("img");
+            img.src = playerImage;
+            img.alt = playerName;
+            img.classList.add("player-image");
+            playerImagesDiv.appendChild(img);
+        }
 
+        // Function to randomize the teams
+        function randomizeTeams() {
+            var team1 = document.getElementById("team1");
+            var team2 = document.getElementById("team2");
+            team1.innerHTML = "";
+            team2.innerHTML = "";
 
-    <script src="/script.js"></script>
+            if (players.length < 10) {
+                alert("Please add at least 10 players to the list.");
+                return;
+            }
+
+            var randomizedPlayers = shuffleArray(players);
+
+            for (var i = 0; i < 10; i++) {
+                var li = document.createElement("li");
+                li.appendChild(document.createTextNode(randomizedPlayers[i].name));
+
+                if (i < 5) {
+                    team1.appendChild(li);
+                } else {
+                    team2.appendChild(li);
+                }
+            }
+        }
+
+        // Function to shuffle an array
+        function shuffleArray(array) {
+            var currentIndex = array.length, temporaryValue, randomIndex;
+
+            while (0 !== currentIndex) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+
+            return array;
+        }
+
+        // Function to save data to localStorage
+        function saveDataToLocalStorage() {
+            localStorage.setItem("players", JSON.stringify(players));
+        }
+
+        // Function to load data from localStorage
+        function loadDataFromLocalStorage() {
+            var storedPlayers = localStorage.getItem("players");
+            if (storedPlayers) {
+                players = JSON.parse(storedPlayers);
+                renderPlayersList();
+                renderPlayerImages();
+            }
+        }
+
+        // Function to render the players list from the localStorage
+        function renderPlayersList() {
+            var playersList = document.getElementById("playersList");
+            playersList.innerHTML = "";
+
+            for (var i = 0; i < players.length; i++) {
+                var playerName = players[i].name;
+                var li = document.createElement("li");
+                li.appendChild(document.createTextNode(playerName));
+                playersList.appendChild(li);
+            }
+        }
+
+        // Function to render the player images from the localStorage
+        function renderPlayerImages() {
+            var playerImagesDiv = document.getElementById("playerImages");
+            playerImagesDiv.innerHTML = "";
+
+            for (var i = 0; i < players.length; i++) {
+                var playerName = players[i].name;
+                var playerImage = players[i].image;
+                renderPlayerImage(playerName, playerImage);
+            }
+        }
+
+        // Function to clear localStorage
+        function clearLocalStorage() {
+            localStorage.removeItem("players");
+            players = [];
+            renderPlayersList();
+            var playerImagesDiv = document.getElementById("playerImages");
+            playerImagesDiv.innerHTML = "";
+        }
+
+        // Load data from localStorage when the page loads
+        window.addEventListener("load", function () {
+            loadDataFromLocalStorage();
+        });
+    </script>
+
     <script src="https://kit.fontawesome.com/a13e2b2f6c.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
