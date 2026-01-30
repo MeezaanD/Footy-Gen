@@ -14,13 +14,22 @@
     <h2 class="text-center pt-5">Football Team Side Randomizer</h2>
     <div class="container d-flex justify-content-center p-3">
         <div class="row">
-            <div class="col-6 col-sm-6 col-md-6 col-lg-6">
+            <div class="col-12 col-sm-6 col-md-6 col-lg-6 mb-2">
                 <input type="text" id="playerName" placeholder="Enter Player Name">
             </div>
-            <br>
-            <div class="col-6 col-sm-6 col-md-6 col-lg-6">
+            <div class="col-12 col-sm-6 col-md-6 col-lg-6 mb-2">
                 <input type="text" id="playerImage" placeholder="Enter player image URL">
             </div>
+        </div>
+    </div>
+
+    <div class="container d-flex justify-content-center mb-3">
+        <div class="player-count-selector">
+            <label for="playerCount">Number of Players:</label>
+            <select id="playerCount" class="form-select">
+                <option value="10">10 Players (5v5)</option>
+                <option value="12">12 Players (6v6)</option>
+            </select>
         </div>
     </div>
 
@@ -59,135 +68,305 @@
     </div>
 
     <script>
-        // Array to store the list of players
-        var players = [];
+        // Application state
+        const AppState = {
+            players: [],
+            STORAGE_KEY: 'football_players'
+        };
 
-        // Function to add a player to the list
-        function addPlayer() {
-            var playerNameInput = document.getElementById("playerName");
-            var playerName = playerNameInput.value;
+        // DOM element cache
+        const DOM = {
+            playerNameInput: null,
+            playerImageInput: null,
+            playersList: null,
+            team1: null,
+            team2: null,
+            playerCount: null,
 
-            var playerImageInput = document.getElementById("playerImage");
-            var playerImage = playerImageInput.value;
-
-            if (playerName !== "") {
-                players.push({ name: playerName, image: playerImage });
-                var playersList = document.getElementById("playersList");
-                var li = document.createElement("li");
-                li.appendChild(document.createTextNode(playerName));
-                playersList.appendChild(li);
-                playerNameInput.value = "";
-                playerImageInput.value = "";
-                saveDataToLocalStorage();
-                renderPlayerImage(playerName, playerImage);
+            init() {
+                this.playerNameInput = document.getElementById("playerName");
+                this.playerImageInput = document.getElementById("playerImage");
+                this.playersList = document.getElementById("playersList");
+                this.team1 = document.getElementById("team1");
+                this.team2 = document.getElementById("team2");
+                this.playerCount = document.getElementById("playerCount");
             }
-        }
+        };
 
-        // Function to render the player image
-        function renderPlayerImage(playerName, playerImage) {
-            var playerImagesDiv = document.getElementById("playerImages");
-            var img = document.createElement("img");
-            img.src = playerImage;
-            img.alt = playerName;
-            img.classList.add("player-image");
-            playerImagesDiv.appendChild(img);
-        }
+        // Utility functions
+        const Utils = {
+            /**
+             * Shuffle array using Fisher-Yates algorithm
+             * @param {Array} array - Array to shuffle
+             * @returns {Array} - Shuffled copy of array
+             */
+            shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            },
 
-        // Function to randomize the teams
-        function randomizeTeams() {
-            var team1 = document.getElementById("team1");
-            var team2 = document.getElementById("team2");
-            team1.innerHTML = "";
-            team2.innerHTML = "";
+            /**
+             * Sanitize HTML to prevent XSS attacks
+             * @param {string} text - Text to sanitize
+             * @returns {string} - Sanitized text
+             */
+            sanitizeHTML(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
 
-            if (players.length < 10) {
-                alert("Please add at least 10 players to the list.");
-                return;
+            /**
+             * Validate player input
+             * @param {string} name - Player name
+             * @returns {Object} - Validation result
+             */
+            validatePlayer(name) {
+                const trimmedName = name.trim();
+                if (!trimmedName) {
+                    return { valid: false, message: 'Player name cannot be empty.' };
+                }
+                if (trimmedName.length > 50) {
+                    return { valid: false, message: 'Player name is too long (max 50 characters).' };
+                }
+                if (AppState.players.some(p => p.name.toLowerCase() === trimmedName.toLowerCase())) {
+                    return { valid: false, message: 'Player already exists.' };
+                }
+                return { valid: true, name: trimmedName };
             }
+        };
 
-            var randomizedPlayers = shuffleArray(players);
+        // Storage management
+        const Storage = {
+            save() {
+                try {
+                    localStorage.setItem(AppState.STORAGE_KEY, JSON.stringify(AppState.players));
+                } catch (e) {
+                    console.error('Failed to save to localStorage:', e);
+                    alert('Failed to save players. Storage might be full.');
+                }
+            },
 
-            for (var i = 0; i < 10; i++) {
-                var li = document.createElement("li");
-                li.appendChild(document.createTextNode(randomizedPlayers[i].name));
+            load() {
+                try {
+                    const stored = localStorage.getItem(AppState.STORAGE_KEY);
+                    if (stored) {
+                        AppState.players = JSON.parse(stored);
+                    }
+                } catch (e) {
+                    console.error('Failed to load from localStorage:', e);
+                    AppState.players = [];
+                }
+            },
 
-                if (i < 5) {
-                    team1.appendChild(li);
-                } else {
-                    team2.appendChild(li);
+            clear() {
+                if (confirm('Are you sure you want to remove all players?')) {
+                    localStorage.removeItem(AppState.STORAGE_KEY);
+                    AppState.players = [];
+                    UI.renderPlayersList();
+                    UI.clearTeams();
                 }
             }
-        }
+        };
 
-        // Function to shuffle an array
-        function shuffleArray(array) {
-            var currentIndex = array.length, temporaryValue, randomIndex;
+        // UI rendering and interactions
+        const UI = {
+            /**
+             * Render the complete players list with edit/delete buttons
+             */
+            renderPlayersList() {
+                DOM.playersList.innerHTML = "";
 
-            while (0 !== currentIndex) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex -= 1;
+                if (AppState.players.length === 0) {
+                    const emptyMessage = document.createElement("li");
+                    emptyMessage.textContent = "No players added yet";
+                    emptyMessage.className = "text-muted";
+                    emptyMessage.style.listStyle = "none";
+                    DOM.playersList.appendChild(emptyMessage);
+                    return;
+                }
 
-                temporaryValue = array[currentIndex];
-                array[currentIndex] = array[randomIndex];
-                array[randomIndex] = temporaryValue;
+                AppState.players.forEach((player, index) => {
+                    const li = document.createElement("li");
+                    li.className = "player-item";
+
+                    const nameSpan = document.createElement("span");
+                    nameSpan.textContent = player.name;
+                    nameSpan.className = "player-name";
+
+                    const actionsDiv = document.createElement("div");
+                    actionsDiv.className = "player-actions";
+
+                    const editBtn = document.createElement("button");
+                    editBtn.innerHTML = '<i class="fa-solid fa-edit"></i>';
+                    editBtn.className = "btn-icon btn-edit";
+                    editBtn.title = "Edit player";
+                    editBtn.onclick = () => PlayerActions.edit(index);
+
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                    deleteBtn.className = "btn-icon btn-delete";
+                    deleteBtn.title = "Delete player";
+                    deleteBtn.onclick = () => PlayerActions.delete(index);
+
+                    actionsDiv.appendChild(editBtn);
+                    actionsDiv.appendChild(deleteBtn);
+
+                    li.appendChild(nameSpan);
+                    li.appendChild(actionsDiv);
+                    DOM.playersList.appendChild(li);
+                });
+            },
+
+            clearInputs() {
+                DOM.playerNameInput.value = "";
+                DOM.playerImageInput.value = "";
+                DOM.playerNameInput.focus();
+            },
+
+            clearTeams() {
+                DOM.team1.innerHTML = "";
+                DOM.team2.innerHTML = "";
+            },
+
+            showError(message) {
+                alert(message);
             }
+        };
 
-            return array;
-        }
+        // Player management actions
+        const PlayerActions = {
+            add() {
+                const name = DOM.playerNameInput.value;
+                const image = DOM.playerImageInput.value.trim();
 
-        // Function to save data to localStorage
-        function saveDataToLocalStorage() {
-            localStorage.setItem("players", JSON.stringify(players));
-        }
+                const validation = Utils.validatePlayer(name);
+                if (!validation.valid) {
+                    UI.showError(validation.message);
+                    return;
+                }
 
-        // Function to load data from localStorage
-        function loadDataFromLocalStorage() {
-            var storedPlayers = localStorage.getItem("players");
-            if (storedPlayers) {
-                players = JSON.parse(storedPlayers);
-                renderPlayersList();
-                renderPlayerImages();
+                AppState.players.push({
+                    name: validation.name,
+                    image: image || ''
+                });
+
+                Storage.save();
+                UI.renderPlayersList();
+                UI.clearInputs();
+            },
+
+            edit(index) {
+                const player = AppState.players[index];
+                const newName = prompt('Edit player name:', player.name);
+
+                if (newName === null) return; // User cancelled
+
+                const validation = Utils.validatePlayer(newName);
+                if (!validation.valid) {
+                    UI.showError(validation.message);
+                    return;
+                }
+
+                // Check if new name conflicts with other players
+                const nameExists = AppState.players.some((p, i) =>
+                    i !== index && p.name.toLowerCase() === validation.name.toLowerCase()
+                );
+
+                if (nameExists) {
+                    UI.showError('Another player already has this name.');
+                    return;
+                }
+
+                AppState.players[index].name = validation.name;
+                Storage.save();
+                UI.renderPlayersList();
+            },
+
+            delete(index) {
+                const player = AppState.players[index];
+                if (confirm(`Remove ${player.name} from the list?`)) {
+                    AppState.players.splice(index, 1);
+                    Storage.save();
+                    UI.renderPlayersList();
+                    UI.clearTeams();
+                }
             }
-        }
+        };
 
-        // Function to render the players list from the localStorage
-        function renderPlayersList() {
-            var playersList = document.getElementById("playersList");
-            playersList.innerHTML = "";
+        // Team management
+        const TeamActions = {
+            randomize() {
+                const playerCount = parseInt(DOM.playerCount.value);
+                const playersPerTeam = playerCount / 2;
 
-            for (var i = 0; i < players.length; i++) {
-                var playerName = players[i].name;
-                var li = document.createElement("li");
-                li.appendChild(document.createTextNode(playerName));
-                playersList.appendChild(li);
+                if (AppState.players.length < playerCount) {
+                    UI.showError(`Please add at least ${playerCount} players to the list.`);
+                    return;
+                }
+
+                UI.clearTeams();
+                const randomizedPlayers = Utils.shuffleArray(AppState.players);
+
+                for (let i = 0; i < playerCount; i++) {
+                    const li = document.createElement("li");
+                    li.textContent = randomizedPlayers[i].name;
+
+                    if (i < playersPerTeam) {
+                        DOM.team1.appendChild(li);
+                    } else {
+                        DOM.team2.appendChild(li);
+                    }
+                }
             }
+        };
+
+        // Event handlers
+        function addPlayer() {
+            PlayerActions.add();
         }
 
-        // Function to render the player images from the localStorage
-        function renderPlayerImages() {
-            var playerImagesDiv = document.getElementById("playerImages");
-            playerImagesDiv.innerHTML = "";
-
-            for (var i = 0; i < players.length; i++) {
-                var playerName = players[i].name;
-                var playerImage = players[i].image;
-                renderPlayerImage(playerName, playerImage);
-            }
+        function randomizeTeams() {
+            TeamActions.randomize();
         }
 
-        // Function to clear localStorage
         function clearLocalStorage() {
-            localStorage.removeItem("players");
-            players = [];
-            renderPlayersList();
-            var playerImagesDiv = document.getElementById("playerImages");
-            playerImagesDiv.innerHTML = "";
+            Storage.clear();
         }
 
-        // Load data from localStorage when the page loads
-        window.addEventListener("load", function () {
-            loadDataFromLocalStorage();
-        });
+        // Add Enter key support for adding players
+        function setupKeyboardShortcuts() {
+            DOM.playerNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    PlayerActions.add();
+                }
+            });
+
+            DOM.playerImageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    PlayerActions.add();
+                }
+            });
+        }
+
+        // Initialize application
+        function init() {
+            DOM.init();
+            Storage.load();
+            UI.renderPlayersList();
+            setupKeyboardShortcuts();
+        }
+
+        // Load when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 
     <script src="https://kit.fontawesome.com/a13e2b2f6c.js" crossorigin="anonymous"></script>
@@ -205,9 +384,14 @@
             font-family: 'Montserrat', sans-serif;
         }
 
+        body {
+            overflow-x: hidden;
+        }
+
         .btn {
             padding: 1rem;
             border-radius: 2px;
+            width: 100%;
         }
 
         .btn:hover {
@@ -217,9 +401,36 @@
         .btns {
             display: flex;
             list-style: none;
-            gap: 2rem;
-            /* margin: 1rem; */
+            gap: 1rem;
             padding: 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btns li {
+            flex: 1 1 200px;
+            min-width: 200px;
+        }
+
+        .player-count-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .player-count-selector label {
+            font-weight: 600;
+        }
+
+        .player-count-selector select {
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid black;
+            box-shadow: 3px 5px rgb(195, 195, 195);
         }
 
         input[type='text'] {
@@ -227,13 +438,124 @@
             text-align: center;
             border: 1px solid black;
             box-shadow: 3px 5px rgb(195, 195, 195);
+            width: 100%;
         }
 
         #playersList {
             display: flex;
-            gap: 5rem;
+            gap: 2rem;
             justify-content: center;
             font-weight: 900;
+            flex-wrap: wrap;
+            padding: 1rem;
+            list-style-position: inside;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 0.25rem;
+            min-width: 200px;
+            transition: all 0.2s ease;
+        }
+
+        .player-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .player-name {
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .player-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            border-radius: 3px;
+        }
+
+        .btn-edit {
+            color: #0d6efd;
+        }
+
+        .btn-edit:hover {
+            background: #0d6efd;
+            color: white;
+        }
+
+        .btn-delete {
+            color: #dc3545;
+        }
+
+        .btn-delete:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .text-muted {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .teams {
+            margin-top: 2rem;
+        }
+
+        .teams .col-12 {
+            margin-bottom: 1rem;
+        }
+
+        @media screen and (max-width: 768px) {
+            h2 {
+                font-size: 1.5rem;
+                padding: 1rem !important;
+            }
+
+            .btns {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .btns li {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .btn {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            input[type='text'] {
+                font-size: 0.9rem;
+            }
+
+            #playersList {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .player-item {
+                width: 100%;
+                max-width: 400px;
+            }
         }
 
         @media screen and (max-width: 550px) {
@@ -249,10 +571,20 @@
 
             .btns {
                 display: block;
+                padding: 0 1rem;
+            }
+
+            .btns li {
+                max-width: 100%;
             }
 
             .btn {
                 margin-top: 1rem;
+            }
+
+            .container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
             }
         }
     </style>
