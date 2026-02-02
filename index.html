@@ -2,592 +2,266 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <title>Randomizer</title>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Footy-Gen | Team Randomizer</title>
+	<link rel="stylesheet" href="style.css">
+	<script src="https://kit.fontawesome.com/a13e2b2f6c.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <h2 class="text-center pt-5">Football Team Side Randomizer</h2>
-    <div class="container d-flex justify-content-center p-3">
-        <div class="row">
-            <div class="col-12 col-sm-6 col-md-6 col-lg-6 mb-2">
-                <input type="text" id="playerName" placeholder="Enter Player Name">
-            </div>
-            <div class="col-12 col-sm-6 col-md-6 col-lg-6 mb-2">
-                <input type="text" id="playerImage" placeholder="Enter player image URL">
-            </div>
-        </div>
-    </div>
-
-    <div class="container d-flex justify-content-center mb-3">
-        <div class="player-count-selector">
-            <label for="playerCount">Number of Players:</label>
-            <select id="playerCount" class="form-select">
-                <option value="10">10 Players (5v5)</option>
-                <option value="12">12 Players (6v6)</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- <div id="playerImages"></div> -->
-
-    <div class="container d-flex justify-content-center">
-        <ul class="btns">
-            <li><button class="btn btn-dark p-3" onclick="addPlayer()">Add Player <i
-                        class="fa-solid fa-circle-plus"></i></button></li>
-            <li><button class="btn btn-dark p-3" onclick="randomizeTeams()">Randomize Teams <i
-                        class="fa-solid fa-infinity"></i></button></li>
-            <li><button class="btn btn-dark p-3" onclick="clearLocalStorage()">Clear Players <i
-                        class="fa-solid fa-trash"></i></button></li>
-        </ul>
-    </div>
-
-    <h3 class="text-center mt-1">Players Available:</h3>
-
-    <ol id="playersList">
-
-    </ol>
-
-    <div class="container">
-        <div class="row text-center teams">
-            <div class="col-12 col-sm-6 col-md-6 col-lg-6 border">
-                <h3 class="p-2 border-bottom">Team 1:</h3>
-                <ol class="text-center" id="team1">
-                    </ul>
-            </div>
-            <div class="col-12 col-sm-6 col-md-6 col-lg-6 border">
-                <h3 class="p-2 border-bottom">Team 2:</h3>
-                <ol class="text-center" id="team2">
-                    </ul>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Application state
-        const AppState = {
-            players: [],
-            STORAGE_KEY: 'football_players'
-        };
-
-        // DOM element cache
-        const DOM = {
-            playerNameInput: null,
-            playerImageInput: null,
-            playersList: null,
-            team1: null,
-            team2: null,
-            playerCount: null,
-
-            init() {
-                this.playerNameInput = document.getElementById("playerName");
-                this.playerImageInput = document.getElementById("playerImage");
-                this.playersList = document.getElementById("playersList");
-                this.team1 = document.getElementById("team1");
-                this.team2 = document.getElementById("team2");
-                this.playerCount = document.getElementById("playerCount");
-            }
-        };
-
-        // Utility functions
-        const Utils = {
-            /**
-             * Shuffle array using Fisher-Yates algorithm
-             * @param {Array} array - Array to shuffle
-             * @returns {Array} - Shuffled copy of array
-             */
-            shuffleArray(array) {
-                const shuffled = [...array];
-                for (let i = shuffled.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                }
-                return shuffled;
-            },
-
-            /**
-             * Sanitize HTML to prevent XSS attacks
-             * @param {string} text - Text to sanitize
-             * @returns {string} - Sanitized text
-             */
-            sanitizeHTML(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            },
-
-            /**
-             * Validate player input
-             * @param {string} name - Player name
-             * @returns {Object} - Validation result
-             */
-            validatePlayer(name) {
-                const trimmedName = name.trim();
-                if (!trimmedName) {
-                    return { valid: false, message: 'Player name cannot be empty.' };
-                }
-                if (trimmedName.length > 50) {
-                    return { valid: false, message: 'Player name is too long (max 50 characters).' };
-                }
-                if (AppState.players.some(p => p.name.toLowerCase() === trimmedName.toLowerCase())) {
-                    return { valid: false, message: 'Player already exists.' };
-                }
-                return { valid: true, name: trimmedName };
-            }
-        };
-
-        // Storage management
-        const Storage = {
-            save() {
-                try {
-                    localStorage.setItem(AppState.STORAGE_KEY, JSON.stringify(AppState.players));
-                } catch (e) {
-                    console.error('Failed to save to localStorage:', e);
-                    alert('Failed to save players. Storage might be full.');
-                }
-            },
-
-            load() {
-                try {
-                    const stored = localStorage.getItem(AppState.STORAGE_KEY);
-                    if (stored) {
-                        AppState.players = JSON.parse(stored);
-                    }
-                } catch (e) {
-                    console.error('Failed to load from localStorage:', e);
-                    AppState.players = [];
-                }
-            },
-
-            clear() {
-                if (confirm('Are you sure you want to remove all players?')) {
-                    localStorage.removeItem(AppState.STORAGE_KEY);
-                    AppState.players = [];
-                    UI.renderPlayersList();
-                    UI.clearTeams();
-                }
-            }
-        };
-
-        // UI rendering and interactions
-        const UI = {
-            /**
-             * Render the complete players list with edit/delete buttons
-             */
-            renderPlayersList() {
-                DOM.playersList.innerHTML = "";
-
-                if (AppState.players.length === 0) {
-                    const emptyMessage = document.createElement("li");
-                    emptyMessage.textContent = "No players added yet";
-                    emptyMessage.className = "text-muted";
-                    emptyMessage.style.listStyle = "none";
-                    DOM.playersList.appendChild(emptyMessage);
-                    return;
-                }
-
-                AppState.players.forEach((player, index) => {
-                    const li = document.createElement("li");
-                    li.className = "player-item";
-
-                    const nameSpan = document.createElement("span");
-                    nameSpan.textContent = player.name;
-                    nameSpan.className = "player-name";
-
-                    const actionsDiv = document.createElement("div");
-                    actionsDiv.className = "player-actions";
-
-                    const editBtn = document.createElement("button");
-                    editBtn.innerHTML = '<i class="fa-solid fa-edit"></i>';
-                    editBtn.className = "btn-icon btn-edit";
-                    editBtn.title = "Edit player";
-                    editBtn.onclick = () => PlayerActions.edit(index);
-
-                    const deleteBtn = document.createElement("button");
-                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-                    deleteBtn.className = "btn-icon btn-delete";
-                    deleteBtn.title = "Delete player";
-                    deleteBtn.onclick = () => PlayerActions.delete(index);
-
-                    actionsDiv.appendChild(editBtn);
-                    actionsDiv.appendChild(deleteBtn);
-
-                    li.appendChild(nameSpan);
-                    li.appendChild(actionsDiv);
-                    DOM.playersList.appendChild(li);
-                });
-            },
-
-            clearInputs() {
-                DOM.playerNameInput.value = "";
-                DOM.playerImageInput.value = "";
-                DOM.playerNameInput.focus();
-            },
-
-            clearTeams() {
-                DOM.team1.innerHTML = "";
-                DOM.team2.innerHTML = "";
-            },
-
-            showError(message) {
-                alert(message);
-            }
-        };
-
-        // Player management actions
-        const PlayerActions = {
-            add() {
-                const name = DOM.playerNameInput.value;
-                const image = DOM.playerImageInput.value.trim();
-
-                const validation = Utils.validatePlayer(name);
-                if (!validation.valid) {
-                    UI.showError(validation.message);
-                    return;
-                }
-
-                AppState.players.push({
-                    name: validation.name,
-                    image: image || ''
-                });
-
-                Storage.save();
-                UI.renderPlayersList();
-                UI.clearInputs();
-            },
-
-            edit(index) {
-                const player = AppState.players[index];
-                const newName = prompt('Edit player name:', player.name);
-
-                if (newName === null) return; // User cancelled
-
-                const validation = Utils.validatePlayer(newName);
-                if (!validation.valid) {
-                    UI.showError(validation.message);
-                    return;
-                }
-
-                // Check if new name conflicts with other players
-                const nameExists = AppState.players.some((p, i) =>
-                    i !== index && p.name.toLowerCase() === validation.name.toLowerCase()
-                );
-
-                if (nameExists) {
-                    UI.showError('Another player already has this name.');
-                    return;
-                }
-
-                AppState.players[index].name = validation.name;
-                Storage.save();
-                UI.renderPlayersList();
-            },
-
-            delete(index) {
-                const player = AppState.players[index];
-                if (confirm(`Remove ${player.name} from the list?`)) {
-                    AppState.players.splice(index, 1);
-                    Storage.save();
-                    UI.renderPlayersList();
-                    UI.clearTeams();
-                }
-            }
-        };
-
-        // Team management
-        const TeamActions = {
-            randomize() {
-                const playerCount = parseInt(DOM.playerCount.value);
-                const playersPerTeam = playerCount / 2;
-
-                if (AppState.players.length < playerCount) {
-                    UI.showError(`Please add at least ${playerCount} players to the list.`);
-                    return;
-                }
-
-                UI.clearTeams();
-                const randomizedPlayers = Utils.shuffleArray(AppState.players);
-
-                for (let i = 0; i < playerCount; i++) {
-                    const li = document.createElement("li");
-                    li.textContent = randomizedPlayers[i].name;
-
-                    if (i < playersPerTeam) {
-                        DOM.team1.appendChild(li);
-                    } else {
-                        DOM.team2.appendChild(li);
-                    }
-                }
-            }
-        };
-
-        // Event handlers
-        function addPlayer() {
-            PlayerActions.add();
-        }
-
-        function randomizeTeams() {
-            TeamActions.randomize();
-        }
-
-        function clearLocalStorage() {
-            Storage.clear();
-        }
-
-        // Add Enter key support for adding players
-        function setupKeyboardShortcuts() {
-            DOM.playerNameInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    PlayerActions.add();
-                }
-            });
-
-            DOM.playerImageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    PlayerActions.add();
-                }
-            });
-        }
-
-        // Initialize application
-        function init() {
-            DOM.init();
-            Storage.load();
-            UI.renderPlayersList();
-            setupKeyboardShortcuts();
-        }
-
-        // Load when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-    </script>
-
-    <script src="https://kit.fontawesome.com/a13e2b2f6c.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
-        crossorigin="anonymous"></script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;900&display=swap');
-
-        * {
-            padding: 0;
-            margin: 0;
-            box-sizing: border-box;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        body {
-            overflow-x: hidden;
-        }
-
-        .btn {
-            padding: 1rem;
-            border-radius: 2px;
-            width: 100%;
-        }
-
-        .btn:hover {
-            box-shadow: 3px 5px rgb(140, 140, 140);
-        }
-
-        .btns {
-            display: flex;
-            list-style: none;
-            gap: 1rem;
-            padding: 0;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .btns li {
-            flex: 1 1 200px;
-            min-width: 200px;
-        }
-
-        .player-count-selector {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .player-count-selector label {
-            font-weight: 600;
-        }
-
-        .player-count-selector select {
-            width: 100%;
-            padding: 10px;
-            text-align: center;
-            border: 1px solid black;
-            box-shadow: 3px 5px rgb(195, 195, 195);
-        }
-
-        input[type='text'] {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid black;
-            box-shadow: 3px 5px rgb(195, 195, 195);
-            width: 100%;
-        }
-
-        #playersList {
-            display: flex;
-            gap: 2rem;
-            justify-content: center;
-            font-weight: 900;
-            flex-wrap: wrap;
-            padding: 1rem;
-            list-style-position: inside;
-        }
-
-        .player-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem 1rem;
-            background: #f8f9fa;
-            border-radius: 5px;
-            margin: 0.25rem;
-            min-width: 200px;
-            transition: all 0.2s ease;
-        }
-
-        .player-item:hover {
-            background: #e9ecef;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .player-name {
-            flex: 1;
-            margin-right: 0.5rem;
-        }
-
-        .player-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn-icon {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            border-radius: 3px;
-        }
-
-        .btn-edit {
-            color: #0d6efd;
-        }
-
-        .btn-edit:hover {
-            background: #0d6efd;
-            color: white;
-        }
-
-        .btn-delete {
-            color: #dc3545;
-        }
-
-        .btn-delete:hover {
-            background: #dc3545;
-            color: white;
-        }
-
-        .text-muted {
-            color: #6c757d;
-            font-style: italic;
-        }
-
-        .teams {
-            margin-top: 2rem;
-        }
-
-        .teams .col-12 {
-            margin-bottom: 1rem;
-        }
-
-        @media screen and (max-width: 768px) {
-            h2 {
-                font-size: 1.5rem;
-                padding: 1rem !important;
-            }
-
-            .btns {
-                flex-direction: column;
-                align-items: center;
-                gap: 1rem;
-            }
-
-            .btns li {
-                width: 100%;
-                max-width: 300px;
-            }
-
-            .btn {
-                padding: 0.8rem;
-                font-size: 0.9rem;
-            }
-
-            input[type='text'] {
-                font-size: 0.9rem;
-            }
-
-            #playersList {
-                flex-direction: column;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .player-item {
-                width: 100%;
-                max-width: 400px;
-            }
-        }
-
-        @media screen and (max-width: 550px) {
-            #playersList {
-                display: block;
-                margin: auto;
-                text-align: center;
-            }
-
-            .row {
-                display: block;
-            }
-
-            .btns {
-                display: block;
-                padding: 0 1rem;
-            }
-
-            .btns li {
-                max-width: 100%;
-            }
-
-            .btn {
-                margin-top: 1rem;
-            }
-
-            .container {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-        }
-    </style>
+
+	<main class="app-container">
+		<header>
+			<h1>Footy-Gen <i class="fa-solid fa-futbol"></i></h1>
+		</header>
+
+		<!-- Input Section -->
+		<section class="input-group">
+			<div class="search-bar">
+				<input type="text" id="playerName" placeholder="Enter Player Name..." aria-label="Player Name">
+				<button class="btn-add" onclick="addPlayer()" aria-label="Add Player">
+					<i class="fa-solid fa-plus"></i>
+				</button>
+			</div>
+
+			<div class="secondary-inputs">
+				<select id="playerCount" aria-label="Select Player Count">
+					<option value="10">10 Players (5v5)</option>
+					<option value="12">12 Players (6v6)</option>
+					<option value="14">14 Players (7v7)</option>
+					<option value="22">22 Players (11v11)</option>
+				</select>
+			</div>
+		</section>
+
+		<!-- Controls -->
+		<section class="controls">
+			<button class="btn-glass primary" onclick="randomizeTeams()">
+				<i class="fa-solid fa-shuffle"></i> Kick Off
+			</button>
+			<button class="btn-glass danger" onclick="clearLocalStorage()">
+				<i class="fa-solid fa-trash-can"></i> Clear
+			</button>
+		</section>
+
+		<!-- Player List -->
+		<section class="list-section">
+			<h3 id="playersCountHeader">Squad List (0)</h3>
+			<div class="player-list-container">
+				<ul id="playersList" class="player-pills">
+					<!-- Players injected here -->
+				</ul>
+			</div>
+		</section>
+
+		<!-- Teams Display -->
+		<section class="teams-section" id="teamsContainer" style="display: none;">
+			<div class="team-card">
+				<h3>Home Team</h3>
+				<ul class="team-list" id="team1"></ul>
+			</div>
+			<div class="team-card">
+				<h3>Away Team</h3>
+				<ul class="team-list" id="team2"></ul>
+			</div>
+		</section>
+	</main>
+
+	<script>
+		// Application state
+		const AppState = {
+			players: [],
+			STORAGE_KEY: 'football_players'
+		};
+
+		// DOM element cache
+		const DOM = {
+			playerNameInput: null,
+			playersList: null,
+			team1: null,
+			team2: null,
+			teamsContainer: null,
+			playerCount: null,
+			playersCountHeader: null,
+
+			init() {
+				this.playerNameInput = document.getElementById("playerName");
+				this.playersList = document.getElementById("playersList");
+				this.team1 = document.getElementById("team1");
+				this.team2 = document.getElementById("team2");
+				this.teamsContainer = document.getElementById("teamsContainer");
+				this.playerCount = document.getElementById("playerCount");
+				this.playersCountHeader = document.getElementById("playersCountHeader");
+			}
+		};
+
+		// Utility functions
+		const Utils = {
+			shuffleArray(array) {
+				const shuffled = [...array];
+				for (let i = shuffled.length - 1; i > 0; i--) {
+					const j = Math.floor(Math.random() * (i + 1));
+					[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+				}
+				return shuffled;
+			},
+
+			validatePlayer(name) {
+				const trimmedName = name.trim();
+				if (!trimmedName) return { valid: false, message: 'Enter a player name!' };
+				if (trimmedName.length > 30) return { valid: false, message: 'Name too long!' };
+				if (AppState.players.some(p => p.name.toLowerCase() === trimmedName.toLowerCase())) {
+					return { valid: false, message: 'Player already included!' };
+				}
+				return { valid: true, name: trimmedName };
+			}
+		};
+
+		// Storage management
+		const Storage = {
+			save() {
+				localStorage.setItem(AppState.STORAGE_KEY, JSON.stringify(AppState.players));
+			},
+			load() {
+				const stored = localStorage.getItem(AppState.STORAGE_KEY);
+				if (stored) AppState.players = JSON.parse(stored);
+			},
+			clear() {
+				if (confirm('Clear the entire squad?')) {
+					localStorage.removeItem(AppState.STORAGE_KEY);
+					AppState.players = [];
+					UI.renderPlayersList();
+					UI.clearTeams();
+				}
+			}
+		};
+
+		// UI Rendering
+		const UI = {
+			renderPlayersList() {
+				DOM.playersList.innerHTML = "";
+				DOM.playersCountHeader.textContent = `Squad List (${AppState.players.length})`;
+
+				if (AppState.players.length === 0) {
+					DOM.playersList.innerHTML = '<li style="color: rgba(255,255,255,0.5); font-style: italic;">No players on the pitch yet.</li>';
+					return;
+				}
+
+				AppState.players.forEach((player, index) => {
+					const li = document.createElement("li");
+					li.className = "player-pill";
+
+					// Allow simple name display
+					const span = document.createElement("span");
+					span.textContent = player.name;
+
+					const delBtn = document.createElement("button");
+					delBtn.className = "btn-delete-pill";
+					delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+					delBtn.onclick = () => PlayerActions.delete(index);
+					delBtn.title = "Remove Player";
+
+					li.appendChild(span);
+					li.appendChild(delBtn);
+					DOM.playersList.appendChild(li);
+				});
+			},
+
+			clearInputs() {
+				DOM.playerNameInput.value = "";
+				DOM.playerNameInput.focus();
+			},
+
+			clearTeams() {
+				DOM.team1.innerHTML = "";
+				DOM.team2.innerHTML = "";
+				DOM.teamsContainer.style.display = 'none';
+			},
+
+			showError(message) {
+				alert(message);
+			}
+		};
+
+		const PlayerActions = {
+			add() {
+				const name = DOM.playerNameInput.value;
+
+				const validation = Utils.validatePlayer(name);
+				if (!validation.valid) {
+					UI.showError(validation.message);
+					return;
+				}
+
+				AppState.players.push({
+					name: validation.name
+				});
+
+				Storage.save();
+				UI.renderPlayersList();
+				UI.clearInputs();
+			},
+
+			delete(index) {
+				AppState.players.splice(index, 1);
+				Storage.save();
+				UI.renderPlayersList();
+				UI.clearTeams();
+			}
+		};
+
+		const TeamActions = {
+			randomize() {
+				const playerCount = parseInt(DOM.playerCount.value);
+
+				if (AppState.players.length < playerCount) {
+					UI.showError(`You need at least ${playerCount} players for this match size!`);
+					return;
+				}
+
+				UI.clearTeams();
+				DOM.teamsContainer.style.display = 'flex';
+
+				const randomizedPlayers = Utils.shuffleArray(AppState.players);
+				const playersPerTeam = playerCount / 2;
+
+				for (let i = 0; i < playerCount; i++) {
+					const li = document.createElement("li");
+					li.textContent = randomizedPlayers[i].name;
+					li.style.animation = `fadeIn 0.5s ease forwards ${i * 0.1}s`;
+					li.style.opacity = '0';
+
+					if (i < playersPerTeam) {
+						DOM.team1.appendChild(li);
+					} else {
+						DOM.team2.appendChild(li);
+					}
+				}
+			}
+		};
+
+		function addPlayer() { PlayerActions.add(); }
+		function randomizeTeams() { TeamActions.randomize(); }
+		function clearLocalStorage() { Storage.clear(); }
+
+		function init() {
+			DOM.init();
+			Storage.load();
+			UI.renderPlayersList();
+
+			DOM.playerNameInput.addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') PlayerActions.add();
+			});
+		}
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', init);
+		} else {
+			init();
+		}
+	</script>
 </body>
 
 </html>
