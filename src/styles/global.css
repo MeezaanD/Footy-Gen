@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Bricolage+Grotesque:wght@600;700;800&display=swap");
+@import "tailwindcss";
+
+:root {
+  --bg-base: #1b0036;
+  --bg-alt: #37003c;
+  --accent: #e90052;
+  --accent-2: #00ff87;
+  --card: rgba(40, 0, 71, 0.76);
+  --card-border: rgba(255, 255, 255, 0.2);
+}
+
+body {
+  font-family: "Space Grotesk", sans-serif;
+  color: #f7f1ff;
+  background:
+    radial-gradient(
+      1200px 500px at 100% -10%,
+      rgba(0, 255, 135, 0.2),
+      transparent 60%
+    ),
+    radial-gradient(
+      800px 500px at -10% 100%,
+      rgba(233, 0, 82, 0.28),
+      transparent 60%
+    ),
+    linear-gradient(145deg, var(--bg-base), var(--bg-alt) 55%, #2a0049);
+}
+
+.brand-title {
+  font-family: "Bricolage Grotesque", sans-serif;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 10px 40px rgba(2, 8, 12, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+.soft-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.soft-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(245, 238, 255, 0.35);
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

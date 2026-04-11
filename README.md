@@ -1,51 +1,54 @@
 # Footy-Gen
 
-A tiny, static web app for quickly randomizing football (soccer) sides.
+Footy-Gen is now an Astro + Tailwind CSS web app with a mobile-first interface and accessible modal flows.
 
-You can add a list of players, choose the match size (currently **10 players / 5v5** or **12 players / 6v6**), then generate two random teams.
+## Stack
+
+- Astro
+- React islands for interactive UI
+- Tailwind CSS
+- Headless UI Dialog for accessible modals
 
 ## Features
 
-- Add players by name (optional image URL field is present, but the current UI only uses the name)
-- Edit / delete players
-- Randomize into **Team 1** and **Team 2**
-- Persists the player list in **localStorage** (so it survives refreshes)
-- Clear all saved players
+- Add and remove players with validation
+- Choose match size (10, 12, 14, or 22 players)
+- Generate randomized home and away teams
+- Mobile-first design, enhanced for desktop
+- Proper modal flows:
+	- Delete confirmation modal
+	- Team results modal
+	- Settings/help modal
+- Persists players and app settings in localStorage
 
 ## Run locally
 
-Because this is a static site, there’s nothing to build.
-
-Option A: open the page directly
-- Open `index.html` in your browser
-
-Option B (recommended): run a tiny local server
-
 ```bash
-# from the repo root
-python3 -m http.server 8000
+npm install
+npm run dev
 ```
 
-Then open:
-- http://localhost:8000/
+Open `http://localhost:4321`.
+
+## Build
+
+```bash
+npm run build
+npm run preview
+```
 
 ## Deployment (GitHub Pages)
 
-This repo includes a GitHub Actions workflow that deploys the static content to **GitHub Pages** on every push to the `main` branch.
-
-Workflow:
-- `.github/workflows/static.yml`
+The workflow at `.github/workflows/static.yml` now builds the Astro site and deploys `dist/` to GitHub Pages.
 
 To enable Pages:
-1. In GitHub: **Settings → Pages**
-2. Set **Build and deployment** to **GitHub Actions**
+
+1. In GitHub, open Settings then Pages.
+2. Set Build and deployment source to GitHub Actions.
 
 ## Project structure
 
-- `index.html` — app UI + JavaScript logic
-- `style.css` — currently empty (styles are inlined in `index.html`)
-
-## Notes
-
-- Player data is stored under the localStorage key: `football_players`.
-- The team randomization uses a Fisher–Yates shuffle.
+- `src/pages/index.astro` - page entry
+- `src/layouts/MainLayout.astro` - shared HTML shell
+- `src/components/TeamGeneratorApp.tsx` - interactive app island and modals
+- `src/styles/global.css` - Tailwind import and global design tokens
