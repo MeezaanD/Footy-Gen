@@ -1,54 +1,49 @@
-# Footy-Gen
+# NextUp
 
-Footy-Gen is now an Astro + Tailwind CSS web app with a mobile-first interface and accessible modal flows.
-
-## Stack
-
-- Astro
-- React islands for interactive UI
-- Tailwind CSS
-- Headless UI Dialog for accessible modals
+NextUp is a React Native mobile app for generating balanced random teams for soccer and padel.
 
 ## Features
 
-- Add and remove players with validation
-- Choose match size (10, 12, 14, or 22 players)
-- Generate randomized home and away teams
-- Mobile-first design, enhanced for desktop
-- Proper modal flows:
-	- Delete confirmation modal
-	- Team results modal
-	- Settings/help modal
-- Persists players and app settings in localStorage
+- Choose between Soccer and Padel
+- Add player names manually with validation
+- Optional session naming
+- Sport-specific format selection
+- Generate balanced random teams
+- Save generations locally on device
+- Browse and manage session history
+- Black / yellow glass-style UI
+
+## Tech Stack
+
+- Expo (managed workflow)
+- React Native
+- TypeScript
+- React Navigation (bottom tabs + native stack)
+- AsyncStorage for local persistence
+- expo-blur for glassmorphism
+- lucide-react-native for icons
 
 ## Run locally
 
 ```bash
 npm install
-npm run dev
+npm start
 ```
 
-Open `http://localhost:4321`.
+Then press `i` for iOS simulator, `a` for Android emulator, or scan the QR code with Expo Go.
 
-## Build
+## Typecheck
 
 ```bash
-npm run build
-npm run preview
+npm run typecheck
 ```
-
-## Deployment (GitHub Pages)
-
-The workflow at `.github/workflows/static.yml` now builds the Astro site and deploys `dist/` to GitHub Pages.
-
-To enable Pages:
-
-1. In GitHub, open Settings then Pages.
-2. Set Build and deployment source to GitHub Actions.
 
 ## Project structure
 
-- `src/pages/index.astro` - page entry
-- `src/layouts/MainLayout.astro` - shared HTML shell
-- `src/components/TeamGeneratorApp.tsx` - interactive app island and modals
-- `src/styles/global.css` - Tailwind import and global design tokens
+- `App.tsx` - App entry with navigation
+- `src/screens/` - Generator, Result, History, Settings
+- `src/navigation/` - Tab and stack navigators
+- `src/components/` - UI and feature components
+- `src/storage/` - AsyncStorage helpers
+- `src/utils/` - Team generation and validation logic
+- `src/theme/` - Colors, spacing, typography tokens
