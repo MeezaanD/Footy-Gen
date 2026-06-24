@@ -1,5 +1,7 @@
 node_modules/
-.astro/
+.expo/
+android/
+ios/
 dist/
 .env
 .DS_Store
